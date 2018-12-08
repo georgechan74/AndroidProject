@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
         mViewModel = ViewModelProviders.of(this).get(IdentificationViewModel.class);
 
-        mViewModel.insert("Way too cool");
+        mViewModel.insert("XYZ");
 
 //        mViewModel.getAllEntries().observe(this, new Observer<List<Identification>>() {
 //            @Override
@@ -225,17 +225,17 @@ public class MainActivity extends AppCompatActivity {
 //            mFail.setVisibility(View.VISIBLE);
 //        }
 //        Log.d("outputresult", mIdentification.getDescription());
-        Log.d("outputresult", output);
-        if (mIdentification != null)
-        {
-            Toast.makeText(this, "Success! Card in database. Activity logged.", Toast.LENGTH_LONG).show();
-            mSuccess.setVisibility(View.VISIBLE);
-        }
-        else
-        {
-            Toast.makeText(this, "Failed! Card not in database. Activity logged. ", Toast.LENGTH_LONG).show();
-            mFail.setVisibility(View.VISIBLE);
-        }
+//        Log.d("outputresult", output);
+//        if (mIdentification != null)
+//        {
+//            Toast.makeText(this, "Success! Card in database. Activity logged.", Toast.LENGTH_LONG).show();
+//            mSuccess.setVisibility(View.VISIBLE);
+//        }
+//        else
+//        {
+//            Toast.makeText(this, "Failed! Card not in database. Activity logged. ", Toast.LENGTH_LONG).show();
+//            mFail.setVisibility(View.VISIBLE);
+//        }
         Sleeper sleeper = new Sleeper();
         sleeper.execute();
     }
@@ -246,6 +246,21 @@ public class MainActivity extends AppCompatActivity {
             mIdentification = mViewModel.checkDatabase(strings[0]);
             Log.d("theCard", mIdentification.getDescription());
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            if (mIdentification != null)
+            {
+                Toast.makeText(MainActivity.this, "Success! Card in database. Activity logged.", Toast.LENGTH_LONG).show();
+                mSuccess.setVisibility(View.VISIBLE);
+            }
+            else
+            {
+                Toast.makeText(MainActivity.this, "Failed! Card not in database. Activity logged. ", Toast.LENGTH_LONG).show();
+                mFail.setVisibility(View.VISIBLE);
+            }
         }
     }
 
