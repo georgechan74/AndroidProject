@@ -34,4 +34,8 @@ public class ScanLogRepository {
             return null;
         }
     }
+
+    int getSize() {
+        return mScanLogDao.getSize();
+    }
 }

@@ -25,4 +25,8 @@ public class ScanLogViewModel extends AndroidViewModel {
     public void insert(ScanLog scanLog) {
         mRepository.insert(scanLog);
     }
+
+    public int getSize() {
+        return mRepository.getSize();
+    }
 }

@@ -30,8 +30,13 @@ public class IdentificationRepository {
             return null;
         }
         Log.d("isdatabaseempty", "no");
-        Log.d("isdatabaseempty", ids.get(0).getDescription());
-        return ids.get(0);
+        if (ids.size() != 0) {
+            Log.d("isdatabaseempty", ids.get(0).getDescription());
+            return ids.get(0);
+        }
+        else {
+            return null;
+        }
     }
 
     public void insert(String description) {

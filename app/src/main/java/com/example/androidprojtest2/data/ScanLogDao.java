@@ -15,4 +15,7 @@ public interface ScanLogDao {
 
     @Query("SELECT * FROM log_table ORDER BY date_logged ASC")
     LiveData<List<ScanLog>> getAllLogs();
+
+    @Query("SELECT COUNT(description) from log_table")
+    int getSize();
 }

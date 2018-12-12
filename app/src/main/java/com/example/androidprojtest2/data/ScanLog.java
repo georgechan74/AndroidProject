@@ -14,22 +14,22 @@ public class ScanLog {
     @ColumnInfo(name = "id")
     private int id;
 
-    @ColumnInfo(name = "location")
-    private String location;
+    @ColumnInfo(name = "description")
+    private String description;
 
     @ColumnInfo(name = "date_logged")
     @TypeConverters(DateConverter.class)
     private Date dateLogged;
 
-    public ScanLog(int id, String location, Date dateLogged) {
+    public ScanLog(int id, String description, Date dateLogged) {
         this.id = id;
-        this.location = location;
+        this.description = description;
         this.dateLogged = dateLogged;
     }
 
     @Ignore
-    public ScanLog(String location, Date dateLogged) {
-        this.location = location;
+    public ScanLog(String description, Date dateLogged) {
+        this.description = description;
         this.dateLogged = dateLogged;
     }
 
@@ -41,12 +41,12 @@ public class ScanLog {
         this.id = id;
     }
 
-    public String getLocation() {
-        return location;
+    public String getDescription() {
+        return description;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Date getDateLogged() {

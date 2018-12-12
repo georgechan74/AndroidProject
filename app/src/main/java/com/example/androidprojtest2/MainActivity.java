@@ -1,5 +1,6 @@
 package com.example.androidprojtest2;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
@@ -31,10 +32,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.androidprojtest2.data.ScanLog;
+import com.example.androidprojtest2.data.ScanLogViewModel;
 import com.example.androidprojtest2.database.Identification;
 import com.example.androidprojtest2.database.IdentificationViewModel;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -45,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private IdentificationViewModel mViewModel;
     private List<Identification> mAllIDs = new ArrayList<>();
     private Identification mIdentification = null;
+    private ScanLogViewModel mScanLogViewModel;
 
     private final String[][] techList = new String[][] {
             new String[] {
@@ -58,10 +63,6 @@ public class MainActivity extends AppCompatActivity {
             }
     };
 
-    enum STATUS{
-        SUCCESS, FAILED
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,16 +73,9 @@ public class MainActivity extends AppCompatActivity {
         mSuccess = (ImageView) findViewById(R.id.success);
 
         mViewModel = ViewModelProviders.of(this).get(IdentificationViewModel.class);
+        mScanLogViewModel = ViewModelProviders.of(this).get(ScanLogViewModel.class);
 
         mViewModel.insert("XYZ");
-
-//        mViewModel.getAllEntries().observe(this, new Observer<List<Identification>>() {
-//            @Override
-//            public void onChanged(@Nullable List<Identification> identifications) {
-////                Log.d("sizeofdatabase", mViewModel.getAllEntries().toString());
-//                updateList(identifications);
-//            }
-//        });
     }
 
     private void updateList(List<Identification> identifications) {
@@ -132,13 +126,8 @@ public class MainActivity extends AppCompatActivity {
                 }
                 finalMessage = convertHexToString(readPayLoad);
                 Log.d("readPayLoad", readPayLoad);
-//                Log.d("payload", messages[0].getRecords()[0].toString());
                 // Process the messages array.
             }
-
-//            mStatus.setText(
-//                    "NFC Tag\n" + ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID)) +
-//                            "\nMessage in Tag: " + finalMessage);
 
             outputResult(finalMessage);
         }
@@ -187,7 +176,6 @@ public class MainActivity extends AppCompatActivity {
 
             temp.append(decimal);
         }
-//        System.out.println("Decimal : " + temp.toString());
 
         return sb.toString();
     }
@@ -202,40 +190,21 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemThatWasClickedId = item.getItemId();
         if (itemThatWasClickedId == R.id.history) {
-            Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
-            startActivity(intent);
+            if (!isFinishing()) {
+                Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
+                Log.d("mainactivityintent", intent.toString());
+                startActivity(intent);
+            }
         }
         return super.onOptionsItemSelected(item);
     }
 
     public void outputResult(String output) {
-//        Log.d("outputresult", output + " test");
-//        Identification identification = null;
+        //see if it matches anything on database then return appropriate message
+        Log.d("outoutresult", output);
         GetIdentification getIdentification = new GetIdentification();
         getIdentification.execute(output);
-//        try {
-//            //asynctask here
-////            identification = mViewModel.checkDatabase(output);
-//            Toast.makeText(this, "Success! Card in database. Activity logged.", Toast.LENGTH_LONG).show();
-//            mSuccess.setVisibility(View.VISIBLE);
-//        }
-//        catch (NullPointerException n)
-//        {
-//            Toast.makeText(this, "Failed! Card not in database. Activity logged. ", Toast.LENGTH_LONG).show();
-//            mFail.setVisibility(View.VISIBLE);
-//        }
-//        Log.d("outputresult", mIdentification.getDescription());
-//        Log.d("outputresult", output);
-//        if (mIdentification != null)
-//        {
-//            Toast.makeText(this, "Success! Card in database. Activity logged.", Toast.LENGTH_LONG).show();
-//            mSuccess.setVisibility(View.VISIBLE);
-//        }
-//        else
-//        {
-//            Toast.makeText(this, "Failed! Card not in database. Activity logged. ", Toast.LENGTH_LONG).show();
-//            mFail.setVisibility(View.VISIBLE);
-//        }
+        //makes message linger for 3 seconds
         Sleeper sleeper = new Sleeper();
         sleeper.execute();
     }
@@ -244,22 +213,26 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(String... strings) {
             mIdentification = mViewModel.checkDatabase(strings[0]);
-            Log.d("theCard", mIdentification.getDescription());
+            ScanLog scanLog = new ScanLog(strings[0], new Date());
+            mScanLogViewModel.insert(scanLog);
             return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            if (mIdentification != null)
-            {
-                Toast.makeText(MainActivity.this, "Success! Card in database. Activity logged.", Toast.LENGTH_LONG).show();
-                mSuccess.setVisibility(View.VISIBLE);
+            if (mIdentification == null){
+
+                Toast.makeText(MainActivity.this, "Card not in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+                mFail.setVisibility(View.VISIBLE);
+                mStatus.setText("Failed...");
             }
             else
             {
-                Toast.makeText(MainActivity.this, "Failed! Card not in database. Activity logged. ", Toast.LENGTH_LONG).show();
-                mFail.setVisibility(View.VISIBLE);
+                Toast.makeText(MainActivity.this, "Card in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+                mSuccess.setVisibility(View.VISIBLE);
+                mStatus.setText("Success!");
+                mIdentification = null;
             }
         }
     }
@@ -279,9 +252,9 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            mFail.setVisibility(View.GONE);
-            mSuccess.setVisibility(View.GONE);
-            mStatus.setText("Awaiting Scan...");
+                mFail.setVisibility(View.GONE);
+                mSuccess.setVisibility(View.GONE);
+                mStatus.setText("Awaiting Scan...");
         }
     }
 }
