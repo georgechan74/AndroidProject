@@ -21,6 +21,7 @@ import android.nfc.tech.NfcF;
 import android.nfc.tech.NfcV;
 import android.os.AsyncTask;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -36,6 +37,11 @@ import com.example.androidprojtest2.data.ScanLog;
 import com.example.androidprojtest2.data.ScanLogViewModel;
 import com.example.androidprojtest2.database.Identification;
 import com.example.androidprojtest2.database.IdentificationViewModel;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,6 +49,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivityMainActivit";
     private TextView mStatus;
     private ImageView mFail;
     private ImageView mSuccess;
@@ -50,6 +57,9 @@ public class MainActivity extends AppCompatActivity {
     private List<Identification> mAllIDs = new ArrayList<>();
     private Identification mIdentification = null;
     private ScanLogViewModel mScanLogViewModel;
+    private FirebaseDatabase mDatabase;
+    private DatabaseReference mMyRef;
+    private boolean mDoesExist = false;
 
     private final String[][] techList = new String[][] {
             new String[] {
@@ -68,6 +78,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mDatabase = FirebaseDatabase.getInstance();
+        mMyRef = mDatabase.getReference().child("securitybadge");
+
+//        Log.d(TAG, "FirebaseDatabase: " + database.toString() + ", DatabaseReference: " + myRef.toString());
+
+//        myRef.setValue("Hello, World!");
+
         mStatus = (TextView) findViewById(R.id.status);
         mFail = (ImageView) findViewById(R.id.fail);
         mSuccess = (ImageView) findViewById(R.id.success);
@@ -75,7 +92,23 @@ public class MainActivity extends AppCompatActivity {
         mViewModel = ViewModelProviders.of(this).get(IdentificationViewModel.class);
         mScanLogViewModel = ViewModelProviders.of(this).get(ScanLogViewModel.class);
 
-        mViewModel.insert("XYZ");
+        mViewModel.insert("Hello!");
+
+//        myRef.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(DataSnapshot dataSnapshot) {
+//                // This method is called once with the initial value and again
+//                // whenever data at this location is updated.
+//                String value = dataSnapshot.getValue(String.class);
+//                Log.d(TAG, "Value is: " + value);
+//            }
+//
+//            @Override
+//            public void onCancelled(DatabaseError error) {
+//                // Failed to read value
+//                Log.w(TAG, "Failed to read value.", error.toException());
+//            }
+//        });
     }
 
     private void updateList(List<Identification> identifications) {
@@ -211,8 +244,26 @@ public class MainActivity extends AppCompatActivity {
 
     class GetIdentification extends AsyncTask<String, Void, Void> {
         @Override
-        protected Void doInBackground(String... strings) {
-            mIdentification = mViewModel.checkDatabase(strings[0]);
+        protected Void doInBackground(final String... strings) {
+//            mIdentification = mViewModel.checkDatabase(strings[0]);
+            mMyRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                        String description = ds.getValue(String.class);
+
+                        if (description.equals(strings[0])) {
+                            Log.d("doesexist", "yes");
+                            mDoesExist = true;
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.d("databaseerror", databaseError.getMessage());
+                }
+            });
             ScanLog scanLog = new ScanLog(strings[0], new Date());
             mScanLogViewModel.insert(scanLog);
             return null;
@@ -221,18 +272,29 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            if (mIdentification == null){
-
+//            if (mIdentification == null){
+//
+//                Toast.makeText(MainActivity.this, "Card not in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+//                mFail.setVisibility(View.VISIBLE);
+//                mStatus.setText("Failed...");
+//            }
+//            else
+//            {
+//                Toast.makeText(MainActivity.this, "Card in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+//                mSuccess.setVisibility(View.VISIBLE);
+//                mStatus.setText("Success!");
+//                mIdentification = null;
+//            }
+            if (!mDoesExist) {
                 Toast.makeText(MainActivity.this, "Card not in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
                 mFail.setVisibility(View.VISIBLE);
                 mStatus.setText("Failed...");
             }
-            else
-            {
+            else {
                 Toast.makeText(MainActivity.this, "Card in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
                 mSuccess.setVisibility(View.VISIBLE);
                 mStatus.setText("Success!");
-                mIdentification = null;
+                mDoesExist = false;
             }
         }
     }

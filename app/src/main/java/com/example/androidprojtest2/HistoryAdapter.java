@@ -61,7 +61,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         void bind(final int position) {
             description.setText(mLogs.get(position).getDescription());
 
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
             String theDate = dateFormat.format(mLogs.get(position).getDateLogged());
             date.setText(theDate);
         }
