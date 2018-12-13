@@ -41,6 +41,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseDatabase mDatabase;
     private DatabaseReference mMyRef;
     private boolean mDoesExist = false;
+    private ArrayList<String> mValues;
 
     private final String[][] techList = new String[][] {
             new String[] {
@@ -79,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mDatabase = FirebaseDatabase.getInstance();
-        mMyRef = mDatabase.getReference().child("securitybadge");
+        mMyRef = mDatabase.getReference();
 
 //        Log.d(TAG, "FirebaseDatabase: " + database.toString() + ", DatabaseReference: " + myRef.toString());
 
@@ -94,19 +96,48 @@ public class MainActivity extends AppCompatActivity {
 
         mViewModel.insert("Hello!");
 
-//        myRef.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                // This method is called once with the initial value and again
-//                // whenever data at this location is updated.
+        //call addvalueeventlistenet to store all values into a list
+        //inside the asynctask to check the database, check the list instead; it has all the values
+
+        mMyRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // This method is called once with the initial value and again
+                // whenever data at this location is updated.
 //                String value = dataSnapshot.getValue(String.class);
 //                Log.d(TAG, "Value is: " + value);
+
+                ArrayList<String> values = new ArrayList<>();
+
+                for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                    String description = ds.getValue(String.class);
+                    values.add(description);
+                    Log.d("descriptionvalue", description);
+                }
+
+                mValues = new ArrayList<>(values);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                // Failed to read value
+                Log.w(TAG, "Failed to read value.", error.toException());
+            }
+        });
+
+//        Log.d("sizeofvalues", mValues.size()+"");
+
+//        mMyRef.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                for (DataSnapshot ds : dataSnapshot.getChildren()) {
+//                    String description = ds.getValue(String.class);
+//                }
 //            }
 //
 //            @Override
-//            public void onCancelled(DatabaseError error) {
-//                // Failed to read value
-//                Log.w(TAG, "Failed to read value.", error.toException());
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//                Log.d("databaseerror", databaseError.getMessage());
 //            }
 //        });
     }
@@ -237,6 +268,16 @@ public class MainActivity extends AppCompatActivity {
         Log.d("outoutresult", output);
         GetIdentification getIdentification = new GetIdentification();
         getIdentification.execute(output);
+        if (mValues.contains(output)) {
+            Toast.makeText(MainActivity.this, "Card in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+            mSuccess.setVisibility(View.VISIBLE);
+            mStatus.setText("Success!");
+        }
+        else {
+            Toast.makeText(MainActivity.this, "Card not in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+            mFail.setVisibility(View.VISIBLE);
+            mStatus.setText("Failed...");
+        }
         //makes message linger for 3 seconds
         Sleeper sleeper = new Sleeper();
         sleeper.execute();
@@ -246,57 +287,38 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(final String... strings) {
 //            mIdentification = mViewModel.checkDatabase(strings[0]);
-            mMyRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                        String description = ds.getValue(String.class);
-
-                        if (description.equals(strings[0])) {
-                            Log.d("doesexist", "yes");
-                            mDoesExist = true;
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    Log.d("databaseerror", databaseError.getMessage());
-                }
-            });
+//            checkFirebase(strings[0]);
+            Log.d("isitchecking", "yes");
             ScanLog scanLog = new ScanLog(strings[0], new Date());
             mScanLogViewModel.insert(scanLog);
             return null;
         }
 
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-//            if (mIdentification == null){
-//
+//        @Override
+//        protected void onPostExecute(Void aVoid) {
+//            super.onPostExecute(aVoid);
+////            if (mIdentification == null){
+////
+////                Toast.makeText(MainActivity.this, "Card not in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+////                mFail.setVisibility(View.VISIBLE);
+////                mStatus.setText("Failed...");
+////            }
+////            else
+////            {
+////                Toast.makeText(MainActivity.this, "Card in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+////                mSuccess.setVisibility(View.VISIBLE);
+////                mStatus.setText("Success!");
+////                mIdentification = null;
+////            }
+//            if (!mDoesExist) {
 //                Toast.makeText(MainActivity.this, "Card not in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
 //                mFail.setVisibility(View.VISIBLE);
 //                mStatus.setText("Failed...");
 //            }
-//            else
-//            {
-//                Toast.makeText(MainActivity.this, "Card in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
-//                mSuccess.setVisibility(View.VISIBLE);
-//                mStatus.setText("Success!");
-//                mIdentification = null;
+//            else {
+//                mDoesExist = false;
 //            }
-            if (!mDoesExist) {
-                Toast.makeText(MainActivity.this, "Card not in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
-                mFail.setVisibility(View.VISIBLE);
-                mStatus.setText("Failed...");
-            }
-            else {
-                Toast.makeText(MainActivity.this, "Card in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
-                mSuccess.setVisibility(View.VISIBLE);
-                mStatus.setText("Success!");
-                mDoesExist = false;
-            }
-        }
+//        }
     }
 
     class Sleeper extends AsyncTask<Void, Void, Void> {
@@ -318,5 +340,48 @@ public class MainActivity extends AppCompatActivity {
                 mSuccess.setVisibility(View.GONE);
                 mStatus.setText("Awaiting Scan...");
         }
+    }
+
+//    private void checkFirebase(final String input){
+//        mMyRef.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                for (DataSnapshot ds : dataSnapshot.getChildren()) {
+//                    String description = ds.getValue(String.class);
+//
+//                    if (description.equals(input)) {
+//                        Log.d("doesexist", "yes");
+//                        mDoesExist = true;
+//                    }
+//                    Log.d("isiterating", "yes");
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//                Log.d("databaseerror", databaseError.getMessage());
+//            }
+//        });
+//    }
+
+    public void checkFirebase(String input) {
+        Log.d("enteredcriticalarea", "true");
+        DatabaseReference myRef = FirebaseDatabase.getInstance().getReference();
+        Query query = myRef.child("securitybadge").equalTo(input);
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    Log.d("foundamatch", "true");
+                    mDoesExist = true;
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.d("databaseerror", databaseError.getMessage());
+            }
+        });
+        Log.d("leavingcriticalarea", "true");
     }
 }
