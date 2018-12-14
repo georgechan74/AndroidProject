@@ -1,5 +1,8 @@
 <resources>
-    <string name="app_name">AndroidProjTest2</string>
+    <string name="app_name">FASTPASS</string>
     <string name="standBy">Awaiting Scan...</string>
     <string name="history">History</string>
+    <string name="fail_cross">1</string>
+    <string name="success_check">1</string>
 </resources>
+

@@ -25,6 +25,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,10 +43,12 @@ import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivityMainActivit";
+    private static final String TAG = "MyTestTag";
     private TextView mStatus;
     private ImageView mFail;
     private ImageView mSuccess;
+    private ProgressBar mProgress;
+    private ProgressBar mProgress2;
     private IdentificationViewModel mViewModel;
     private ScanLogViewModel mScanLogViewModel;
     private FirebaseDatabase mDatabase;
@@ -53,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean mAddItem = false;
     private boolean mRemoveItem = false;
     private HashMap<String, String> mValues;
+    private TextView mVerbose;
 
     private final String[][] techList = new String[][] {
             new String[] {
@@ -77,6 +81,10 @@ public class MainActivity extends AppCompatActivity {
         mStatus = (TextView) findViewById(R.id.status);
         mFail = (ImageView) findViewById(R.id.fail);
         mSuccess = (ImageView) findViewById(R.id.success);
+        mProgress = (ProgressBar) findViewById(R.id.progress);
+        mProgress2 = (ProgressBar) findViewById(R.id.progress2);
+        mVerbose = (TextView) findViewById(R.id.verbose);
+        mVerbose.setVisibility(View.GONE);
 
         mViewModel = ViewModelProviders.of(this).get(IdentificationViewModel.class);
         mScanLogViewModel = ViewModelProviders.of(this).get(ScanLogViewModel.class);
@@ -227,12 +235,16 @@ public class MainActivity extends AppCompatActivity {
         else if (itemThatWasClickedId == R.id.addButton){
             mAddItem = !mAddItem;
             mRemoveItem = false;
-            Toast.makeText(MainActivity.this, "The next card scanned will be added to the database.", Toast.LENGTH_LONG).show();
+//            Toast.makeText(MainActivity.this, "The next card scanned will be added to the database.", Toast.LENGTH_LONG).show();
+            mVerbose.setText("The next card scanned will be added to the database.");
+            mVerbose.setVisibility(View.VISIBLE);
         }
         else if (itemThatWasClickedId == R.id.removeButton){
             mAddItem = false;
             mRemoveItem = !mRemoveItem;
-            Toast.makeText(MainActivity.this, "The next card scanned will be removed from the database.", Toast.LENGTH_LONG).show();
+//            Toast.makeText(MainActivity.this, "The next card scanned will be removed from the database.", Toast.LENGTH_LONG).show();
+            mVerbose.setText("The next card scanned will be removed from the database.");
+            mVerbose.setVisibility(View.VISIBLE);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -252,15 +264,23 @@ public class MainActivity extends AppCompatActivity {
     protected void add(String output){
         if (mValues.containsValue(output))
         {
-            Toast.makeText(MainActivity.this, "Card is already in database, cancelling add.", Toast.LENGTH_LONG).show();
+//            Toast.makeText(MainActivity.this, "Card is already in database, cancelling add.", Toast.LENGTH_LONG).show();
             mFail.setVisibility(View.VISIBLE);
+            mProgress.setVisibility(View.INVISIBLE);
+            mProgress2.setVisibility(View.INVISIBLE);
+            mVerbose.setText("Card is already in database, cancelling add.");
+            mVerbose.setVisibility(View.VISIBLE);
             mStatus.setText("Duplicate card found");
         }
 
         else {
 //            Toast.makeText(MainActivity.this, "Card is not in database, " +output+ " will be added." , Toast.LENGTH_LONG).show();
-            Toast.makeText(MainActivity.this, "Card is not in database and will be added." , Toast.LENGTH_LONG).show();
+//            Toast.makeText(MainActivity.this, "Card is not in database and will be added." , Toast.LENGTH_LONG).show();
             mSuccess.setVisibility(View.VISIBLE);
+            mProgress.setVisibility(View.INVISIBLE);
+            mProgress2.setVisibility(View.INVISIBLE);
+            mVerbose.setText("Card is not in database and will be added.");
+            mVerbose.setVisibility(View.VISIBLE);
             mStatus.setText("Added!");
             DatabaseReference tempRef = mMyRef.child("Tag"+(mValues.size()+1));
             tempRef.setValue(output);
@@ -273,14 +293,22 @@ public class MainActivity extends AppCompatActivity {
     protected void remove(String output){
         if (!mValues.containsValue(output))
         {
-            Toast.makeText(MainActivity.this, "Card is not in database, cancelling remove.", Toast.LENGTH_LONG).show();
+//            Toast.makeText(MainActivity.this, "Card is not in database, cancelling remove.", Toast.LENGTH_LONG).show();
             mFail.setVisibility(View.VISIBLE);
+            mProgress.setVisibility(View.INVISIBLE);
+            mProgress2.setVisibility(View.INVISIBLE);
+            mVerbose.setText("Card is not in database, cancelling remove.");
+            mVerbose.setVisibility(View.VISIBLE);
             mStatus.setText("Card not found");
         }
         else{
 //            Toast.makeText(MainActivity.this, "Card is in the database, " +output+ " will be removed.", Toast.LENGTH_LONG).show();
-            Toast.makeText(MainActivity.this, "Card is in the database and will be removed.", Toast.LENGTH_LONG).show();
+//            Toast.makeText(MainActivity.this, "Card is in the database and will be removed.", Toast.LENGTH_LONG).show();
             mSuccess.setVisibility(View.VISIBLE);
+            mProgress.setVisibility(View.INVISIBLE);
+            mProgress2.setVisibility(View.INVISIBLE);
+            mVerbose.setText("Card is in the database and will be removed.");
+            mVerbose.setVisibility(View.VISIBLE);
             mStatus.setText("Removed!");
             String tagName = null;
             for(String s : mValues.keySet()){
@@ -303,12 +331,26 @@ public class MainActivity extends AppCompatActivity {
         GetIdentification getIdentification = new GetIdentification();
         getIdentification.execute(output);
         if (mValues.containsValue(output)) {
-            Toast.makeText(MainActivity.this, "Card in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+//            Toast.makeText(MainActivity.this, "Card in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+            mProgress.setVisibility(View.INVISIBLE);
+            mProgress2.setVisibility(View.INVISIBLE);
+            mVerbose.setText("You scanned:\n"
+                    + "Output: " + output + "\n"
+                    + "at " + new Date() + "\n"
+                    + "This card is in the database.");
+            mVerbose.setVisibility(View.VISIBLE);
             mSuccess.setVisibility(View.VISIBLE);
             mStatus.setText("Success!");
         }
         else {
-            Toast.makeText(MainActivity.this, "Card not in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+//            Toast.makeText(MainActivity.this, "Card not in database. Scan activity logged to history.", Toast.LENGTH_LONG).show();
+            mProgress.setVisibility(View.INVISIBLE);
+            mProgress2.setVisibility(View.INVISIBLE);
+            mVerbose.setText("You scanned:\n"
+                    + "Output: " + output + "\n"
+                    + "at " + new Date() + "\n"
+                    + "This card is not in the database.");
+            mVerbose.setVisibility(View.VISIBLE);
             mFail.setVisibility(View.VISIBLE);
             mStatus.setText("Failed...");
         }
@@ -332,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... voids) {
             try {
-                Thread.sleep(3000);
+                Thread.sleep(6000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -344,6 +386,9 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(aVoid);
             mFail.setVisibility(View.GONE);
             mSuccess.setVisibility(View.GONE);
+            mProgress.setVisibility(View.VISIBLE);
+            mProgress2.setVisibility(View.VISIBLE);
+            mVerbose.setVisibility(View.GONE);
             mStatus.setText("Awaiting Scan...");
         }
     }
